@@ -3617,7 +3617,11 @@ document.addEventListener("click", event => {
    ADMIN DELETE PRODUCT
 ===================================================== */
 
-document.addEventListener("click", event => {
+/* =====================================================
+   ADMIN DELETE PRODUCT — NEON DATABASE
+===================================================== */
+
+document.addEventListener("click", async event => {
 
   const button = event.target.closest(
     "[data-delete-product]"
@@ -3627,61 +3631,107 @@ document.addEventListener("click", event => {
     return;
   }
 
-  if (!adminLoggedIn) {
+  if (!adminLoggedIn || !adminToken) {
+    showToast("Please login as admin first.", "error");
     return;
   }
 
-  const id = button.dataset.deleteProduct;
+  const id = String(button.dataset.deleteProduct);
 
   const product = products.find(
-    product => product.id === id
+    item => String(item.id) === id
   );
 
   if (!product) {
+    showToast("Product could not be found.", "error");
+    return;
+  }
+
+  // MK1001 आदि sample products केवल demo हैं।
+  if (!/^\d+$/.test(id)) {
+    showToast(
+      "Sample products cannot be permanently deleted. Delete database products instead.",
+      "error"
+    );
     return;
   }
 
   const confirmed = window.confirm(
-    `Delete "${product.name}"? This cannot be undone in this demo.`
+    `Are you sure you want to delete "${product.name}"?`
   );
 
   if (!confirmed) {
     return;
   }
 
-  products = products.filter(
-    product => product.id !== id
-  );
+  button.disabled = true;
+  button.textContent = "Deleting...";
 
-  cart = cart.filter(
-    item => item.productId !== id
-  );
+  try {
 
-  wishlist = wishlist.filter(
-    item => item !== id
-  );
+    const response = await fetch(
+      `${ADMIN_API_URL}/products/${encodeURIComponent(id)}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${adminToken}`
+        }
+      }
+    );
 
-  persistProducts();
+    const result = await response.json();
 
-  persistCart();
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.message ||
+        result.error ||
+        "Product could not be deleted."
+      );
+    }
 
-  persistWishlist();
+    // Remove the deleted product from the cart and wishlist.
+    cart = cart.filter(
+      item => String(item.productId) !== id
+    );
 
-  updateCartCount();
+    wishlist = wishlist.filter(
+      item => String(item) !== id
+    );
 
-  renderProducts();
+    persistCart();
+    persistWishlist();
 
-  renderHomeCategories();
+    // Reload the current product list from the database.
+    await loadProductsFromBackend();
 
-  renderAdminDashboard();
+    renderProducts();
+    renderHomeCategories();
+    renderAllCategories();
+    renderAdminDashboard();
+    updateCartCount();
 
-  showToast(
-    "Product deleted.",
-    "success"
-  );
+    showToast(
+      "Product deleted successfully.",
+      "success"
+    );
+
+  } catch (error) {
+
+    console.error("Product delete error:", error);
+
+    showToast(
+      error.message || "Could not delete product.",
+      "error"
+    );
+
+  } finally {
+
+    button.disabled = false;
+    button.textContent = "Delete";
+
+  }
 
 });
-
 
 /* =====================================================
    INITIALIZE

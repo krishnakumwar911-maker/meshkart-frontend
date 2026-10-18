@@ -516,7 +516,97 @@ function showToast(message, type = "") {
 
 }
 
+// ======================================================
+// MESHKART - LOAD PRODUCTS FROM NEON DATABASE
+// ======================================================
 
+async function loadProductsFromBackend() {
+  try {
+    const apiBase = CONFIG.API_BASE_URL;
+
+    if (!apiBase) {
+      console.warn("MeshKart API URL is not configured.");
+      return;
+    }
+
+    let allProducts = [];
+    let offset = 0;
+    const limit = 100;
+
+    while (true) {
+      const response = await fetch(
+        `${apiBase}/api/products?limit=${limit}&offset=${offset}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Products API returned ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (!result.success || !Array.isArray(result.products)) {
+        throw new Error("Invalid products API response.");
+      }
+
+      allProducts.push(...result.products);
+
+      if (result.products.length < limit) {
+        break;
+      }
+
+      offset += limit;
+    }
+
+    // Convert backend fields into the format used by the storefront.
+    const backendProducts = allProducts.map(product => ({
+      id: String(product.id),
+      name: product.name || "",
+      brand: product.brand || "MeshKart Collection",
+      category: product.category || "",
+      description: product.description || "",
+      price: Number(product.price || 0),
+      originalPrice: Number(
+        product.original_price ?? product.price ?? 0
+      ),
+      stock: Number(product.stock || 0),
+      image: product.image_url || "",
+      images: Array.isArray(product.images) ? product.images : [],
+      sizes: Array.isArray(product.sizes) ? product.sizes : [],
+      colors: Array.isArray(product.colors) ? product.colors : [],
+      specifications: product.specifications || {},
+      featured: product.featured === true
+    }));
+
+    // Keep existing demo products; backend products replace matching IDs.
+    const backendIds = new Set(
+      backendProducts.map(product => String(product.id))
+    );
+
+    const demoProducts = SAMPLE_PRODUCTS.filter(
+      product => !backendIds.has(String(product.id))
+    );
+
+    products = [...backendProducts, ...demoProducts];
+
+    writeStorage(CONFIG.STORAGE.PRODUCTS, products);
+
+    // Refresh the storefront using the latest database data.
+    renderHomeCategories();
+    renderAllCategories();
+    renderProducts();
+    updateCartCount();
+
+    console.log(
+      `MeshKart: loaded ${backendProducts.length} products from backend.`
+    );
+  } catch (error) {
+    console.error("Could not load products from backend:", error);
+    showToast(
+      "Latest products could not be loaded. Showing saved products.",
+      "error"
+    );
+  }
+}
 function persistProducts() {
 
   return writeStorage(
@@ -3177,250 +3267,208 @@ function populateProductForm(product) {
 }
 
 
-$("#addProductForm").addEventListener(
+ $("#addProductForm").addEventListener(
   "submit",
-  event => {
+  async event => {
 
     event.preventDefault();
 
-    if (!adminLoggedIn) {
-
-      showToast(
-        "Admin login is required.",
-        "error"
-      );
-
+    if (!adminLoggedIn || !adminToken) {
+      showToast("Please login as admin first.", "error");
       return;
-
     }
 
+    const form = event.currentTarget;
+    const submitButton = form.querySelector(
+      'button[type="submit"]'
+    );
+    const message = $("#addProductMessage");
 
-    const name = $("#adminProductName").value.trim();
-
-    const brand = $("#adminProductBrand").value.trim();
-
-    const category = $("#adminProductCategory").value;
-
-    const price = Number($("#adminProductPrice").value);
-
-    const originalPrice = Number(
-      $("#adminProductOriginalPrice").value
-    ) || price;
-
-    const stock = Number($("#adminProductStock").value);
-
-    const imageInput = $("#adminProductImage").value.trim();
-
-    const image = safeImageURL(imageInput);
-
-    const description = $("#adminProductDescription")
-      .value
-      .trim();
-
-
-    if (!name || !category || !description) {
-
-      showToast(
-        "Please complete all required product fields.",
-        "error"
-      );
-
-      return;
-
+    if (submitButton) {
+      submitButton.disabled = true;
     }
 
-    if (
-      !Number.isFinite(price) ||
-      price < 0
-    ) {
+    try {
 
-      showToast(
-        "Enter a valid product price.",
-        "error"
-      );
+      const name = $("#adminProductName").value.trim();
+      const brand = $("#adminProductBrand").value.trim();
+      const category = $("#adminProductCategory").value;
+      const price = Number($("#adminProductPrice").value);
 
-      return;
+      const originalPrice =
+        Number($("#adminProductOriginalPrice").value) || price;
 
-    }
+      const stock = Number($("#adminProductStock").value);
 
-    if (
-      !Number.isInteger(stock) ||
-      stock < 0
-    ) {
+      const imageInput = $("#adminProductImage").value.trim();
+      const image = safeImageURL(imageInput);
 
-      showToast(
-        "Enter a valid stock quantity.",
-        "error"
-      );
+      const description =
+        $("#adminProductDescription").value.trim();
 
-      return;
-
-    }
-
-    if (
-      originalPrice < price
-    ) {
-
-      showToast(
-        "Original price should not be lower than the selling price.",
-        "error"
-      );
-
-      return;
-
-    }
-
-    if (
-      imageInput &&
-      !image
-    ) {
-
-      showToast(
-        "Use a valid HTTP or HTTPS image URL.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    const gallery = $(
-      "#adminProductGallery"
-    ).value
-
-      .split("\n")
-
-      .map(item => item.trim())
-
-      .filter(Boolean)
-
-      .map(safeImageURL)
-
-      .filter(Boolean);
-
-
-    const productData = {
-
-      name,
-
-      brand: brand || "MeshKart Collection",
-
-      category,
-
-      price,
-
-      originalPrice,
-
-      stock,
-
-      image,
-
-      images: gallery,
-
-      description,
-
-      sizes: parseCommaSeparated(
-        $("#adminProductSizes").value
-      ),
-
-      colors: parseCommaSeparated(
-        $("#adminProductColors").value
-      ),
-
-      specifications: parseSpecifications(
-        $("#adminProductSpecs").value
-      ),
-
-      featured: $("#adminProductFeatured").checked
-
-    };
-
-
-    if (editingProductId) {
-
-      const index = products.findIndex(
-        product => product.id === editingProductId
-      );
-
-      if (index === -1) {
-
-        showToast(
-          "Product could not be found.",
-          "error"
+      if (!name || !category || !description) {
+        throw new Error(
+          "Please complete all required product fields."
         );
-
-        return;
-
       }
 
-      products[index] = {
+      if (!Number.isFinite(price) || price < 0) {
+        throw new Error("Enter a valid selling price.");
+      }
 
-        ...products[index],
+      if (!Number.isInteger(stock) || stock < 0) {
+        throw new Error("Enter a valid stock quantity.");
+      }
 
-        ...productData
+      if (originalPrice < price) {
+        throw new Error(
+          "Original price cannot be lower than selling price."
+        );
+      }
 
+      if (imageInput && !image) {
+        throw new Error(
+          "Please enter a valid HTTP or HTTPS image URL."
+        );
+      }
+
+      const gallery = $("#adminProductGallery").value
+        .split("\n")
+        .map(item => item.trim())
+        .filter(Boolean)
+        .map(safeImageURL)
+        .filter(Boolean);
+
+      const productData = {
+        name,
+        brand: brand || "MeshKart Collection",
+        category,
+        description,
+        price,
+        original_price: originalPrice,
+        stock,
+        image_url: image,
+        images: gallery,
+        sizes: parseCommaSeparated(
+          $("#adminProductSizes").value
+        ),
+        colors: parseCommaSeparated(
+          $("#adminProductColors").value
+        ),
+        specifications: parseSpecifications(
+          $("#adminProductSpecs").value
+        ),
+        featured: $("#adminProductFeatured").checked,
+        is_active: true
       };
 
-    } else {
+      const isEditing = editingProductId !== null;
 
-      if (products.length >= CONFIG.MAX_PRODUCTS) {
+      let endpoint =
+        `${ADMIN_API_URL}/products`;
 
-        showToast(
-          "The maximum of 5,000 products has been reached.",
-          "error"
-        );
+      let method = "POST";
 
-        return;
+      if (isEditing) {
 
+        // Database products have numeric IDs.
+        // MK1001, MK1002 etc. are demonstration products.
+
+        if (!/^\d+$/.test(String(editingProductId))) {
+          throw new Error(
+            "This is a sample product. Add it as a new product to save it permanently."
+          );
+        }
+
+        endpoint =
+          `${ADMIN_API_URL}/products/${encodeURIComponent(editingProductId)}`;
+
+        method = "PUT";
       }
 
-      productData.id = generateId("MK");
+      if (message) {
+        message.textContent = isEditing
+          ? "Updating product in database..."
+          : "Saving product to database...";
 
-      products.unshift(productData);
+        message.className = "form-message";
+      }
+
+      const response = await fetch(endpoint, {
+        method,
+
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${adminToken}`
+        },
+
+        body: JSON.stringify(productData)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message ||
+          result.error ||
+          "The server could not save this product."
+        );
+      }
+
+      // Reload products from Neon after saving.
+      await loadProductsFromBackend();
+
+      $("#addProductForm").reset();
+      $("#addProductForm").classList.add("hidden");
+
+      editingProductId = null;
+
+      $("#productFormHeading").textContent =
+        "Add New Product";
+
+      if (message) {
+        message.textContent = "";
+      }
+
+      renderProducts();
+      renderHomeCategories();
+      renderAllCategories();
+      renderAdminDashboard();
+      updateCartCount();
+
+      showToast(
+        isEditing
+          ? "Product updated in database successfully."
+          : "Product added to database successfully.",
+        "success"
+      );
+
+    } catch (error) {
+
+      console.error("Product save error:", error);
+
+      if (message) {
+        message.textContent =
+          error.message || "Could not save product.";
+
+        message.className = "form-message error";
+      }
+
+      showToast(
+        error.message || "Could not save product.",
+        "error"
+      );
+
+    } finally {
+
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
 
     }
-
-
-    if (!persistProducts()) {
-      return;
-    }
-
-
-    $("#addProductMessage").textContent =
-      editingProductId
-        ? "Product updated successfully."
-        : "Product added successfully.";
-
-    $("#addProductMessage").className =
-      "form-message success";
-
-
-    $("#addProductForm").reset();
-
-    $("#addProductForm").classList.add("hidden");
-
-    editingProductId = null;
-
-
-    renderProducts();
-
-    renderHomeCategories();
-
-    renderAllCategories();
-
-    renderAdminDashboard();
-
-    updateCartCount();
-
-
-    showToast(
-      "Product saved and storefront updated.",
-      "success"
-    );
 
   }
-);
+);   
 
 
 /* =====================================================
@@ -3639,26 +3687,19 @@ document.addEventListener("click", event => {
    INITIALIZE
 ===================================================== */
 
-function initializeApp() {
-
-  $("#currentYear").textContent =
-    new Date().getFullYear();
+async function initializeApp() {
+  $("#currentYear").textContent = new Date().getFullYear();
 
   renderHomeCategories();
-
   renderAllCategories();
-
   renderProducts();
-
   updateCartCount();
-
   renderCart();
 
+  await loadProductsFromBackend();
 }
 
-
 initializeApp();
-
 
 
 

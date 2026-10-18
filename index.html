@@ -756,38 +756,133 @@
     </section>
 
 
-    <!-- ACCOUNT PAGE -->
-    <section class="page" id="accountPage">
+    <!-- ACCOUNT PAGE --><section class="page" id="accountPage">  <div class="container page-container"><div class="page-heading account-heading">
+  <span class="section-kicker">YOUR MESHKART ACCOUNT</span>
+  <h1>Welcome to MeshKart</h1>
+  <p>Sign in to manage your orders and shopping experience.</p>
+</div>
 
-      <div class="container page-container">
+<div class="account-login-layout">
 
-        <div class="page-heading">
-          <span class="section-kicker">YOUR ACCOUNT</span>
-          <h1>Welcome to MeshKart</h1>
-          <p>Account login will be connected to the backend later.</p>
+  <div class="account-benefits">
+
+    <span class="account-eyebrow">YOUR SHOPPING, CONNECTED</span>
+
+    <h2>Everything you need.<br>All in one place.</h2>
+
+    <p>
+      Sign in securely to access your orders and keep your
+      shopping history available across your devices.
+    </p>
+
+    <div class="account-benefit-list">
+
+      <div class="account-benefit">
+        <span class="account-benefit-icon">✓</span>
+        <div>
+          <h3>Track your orders</h3>
+          <p>Keep an eye on your purchases and their status.</p>
         </div>
-
-        <div class="account-card">
-
-          <div class="account-illustration">🛍️</div>
-
-          <h2>Shopping made simple</h2>
-
-          <p>
-            Sign-in and account management will be enabled
-            after backend integration.
-          </p>
-
-          <button class="primary-button" data-page="orders">
-            View Demo Orders
-          </button>
-
-        </div>
-
       </div>
 
-    </section>
+      <div class="account-benefit">
+        <span class="account-benefit-icon">↻</span>
+        <div>
+          <h3>Your history, always available</h3>
+          <p>Access saved order history when you sign in on another device.</p>
+        </div>
+      </div>
 
+      <div class="account-benefit">
+        <span class="account-benefit-icon">⌑</span>
+        <div>
+          <h3>Secure sign-in</h3>
+          <p>Use your Google account to sign in.</p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="account-card">
+
+    <a href="#" class="brand account-brand" data-page="home"
+       aria-label="MeshKart home">
+      <span class="brand-logo">M</span>
+      <span class="brand-name">Mesh<span>Kart</span></span>
+    </a>
+
+    <div class="account-card-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M20 8H4L6 20H18L20 8Z"
+          stroke="currentColor" stroke-width="1.7"
+          stroke-linejoin="round"/>
+        <path d="M9 9V6A3 3 0 0 1 15 6V9"
+          stroke="currentColor" stroke-width="1.7"
+          stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <h2>Sign in to continue</h2>
+
+    <p class="account-card-description">
+      One secure sign-in for your MeshKart account.
+    </p>
+
+    <button
+      type="button"
+      class="google-login-button"
+      id="googleLoginButton"
+    >
+      <svg class="google-icon" viewBox="0 0 48 48"
+           aria-hidden="true">
+        <path fill="#EA4335"
+          d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z"
+          transform="translate(0 4)"/>
+        <path fill="#4285F4"
+          d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.75 7.18l7.72 5.99c4.51-4.17 7.07-10.31 7.07-17.64Z"
+          transform="translate(0 0)"/>
+        <path fill="#FBBC05"
+          d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.52 2.56 10.78l7.97-6.19Z"
+          transform="translate(0 0)"/>
+        <path fill="#34A853"
+          d="M24 48c6.48 0 11.93-2.13 15.91-5.81l-7.72-5.99c-2.14 1.45-4.89 2.3-8.19 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z"
+          transform="translate(0 0)"/>
+      </svg>
+
+      <span>Continue with Google</span>
+    </button>
+
+    <p class="account-login-message"
+       id="accountLoginMessage"
+       role="status"
+       aria-live="polite">
+      Google sign-in setup is required to enable login.
+    </p>
+
+    <div class="account-divider">
+      <span>YOUR ACCOUNT, YOUR CONTROL</span>
+    </div>
+
+    <p class="account-privacy-note">
+      By continuing, you agree to our
+      <a href="terms.html">Terms &amp; Conditions</a>
+      and acknowledge our
+      <a href="privacy.html">Privacy Policy</a>.
+    </p>
+
+    <button type="button"
+            class="account-back-button"
+            data-page="home">
+      ← Continue shopping
+    </button>
+
+  </div>
+
+</div>
+
+  </div></section>
 
     <!-- ADMIN LOGIN -->
     <section class="page" id="adminPage">

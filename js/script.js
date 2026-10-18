@@ -10,18 +10,9 @@
 ===================================================== */
 
 const CONFIG = {
+  API_BASE_URL: "https://meshkart-backend.onrender.com",
 
   MAX_PRODUCTS: 5000,
-
-  /*
-    अपना एडमिन कोड यहाँ सेट करना।
-
-    यह केवल FRONTEND DEMO है।
-    वास्तविक वेबसाइट में एडमिन पासवर्ड
-    सर्वर पर सत्यापित किया जाएगा।
-  */
-
-  ADMIN_CODE: "993100",
 
   STORAGE: {
     PRODUCTS: "meshkart_products_v1",
@@ -29,7 +20,6 @@ const CONFIG = {
     ORDERS: "meshkart_orders_v1",
     WISHLIST: "meshkart_wishlist_v1"
   }
-
 };
 
 

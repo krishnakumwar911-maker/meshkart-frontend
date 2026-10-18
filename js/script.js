@@ -585,74 +585,97 @@ const PAGE_IDS = {
 
 };
 
-
 function showPage(pageName, options = {}) {
 
-  if (!PAGE_IDS[pageName]) {
-    pageName = "home";
-  }
+if (!PAGE_IDS[pageName]) {
+pageName = "home";
+}
 
-  if (
-    pageName === "checkout" &&
-    cart.length === 0 &&
-    !options.allowEmpty
-  ) {
+// CUSTOMER LOGIN CHECK
+// Real Google authentication will be connected next.
+const customerToken = localStorage.getItem("meshkart_customer_token");
 
-    showToast(
-      "Your cart is empty. Select a product first.",
-      "error"
-    );
+if (
+["checkout", "orders"].includes(pageName) &&
+!customerToken &&
+!options.allowEmpty
+) {
 
-    pageName = "home";
+// Remember the page the customer wanted to open.
+sessionStorage.setItem(
+  "meshkart_pending_page",
+  pageName
+);
 
-  }
+showToast(
+  "Please sign in with Google to continue.",
+  "error"
+);
 
-  currentPage = pageName;
-
-  $all(".page").forEach(page => {
-
-    page.classList.remove("active");
-
-  });
-
-  const page = $("#" + PAGE_IDS[pageName]);
-
-  if (page) {
-    page.classList.add("active");
-  }
-
-  closeMobileMenu();
-
-  if (pageName === "home") {
-    renderProducts();
-  }
-
-  if (pageName === "categories") {
-    renderAllCategories();
-  }
-
-  if (pageName === "cart") {
-    renderCart();
-  }
-
-  if (pageName === "checkout") {
-    renderCheckoutSummary();
-  }
-
-  if (pageName === "orders") {
-    renderOrders();
-  }
-
-  if (pageName === "admin" && adminLoggedIn) {
-    renderAdminDashboard();
-  }
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
+pageName = "account";
 
 }
+
+if (
+pageName === "checkout" &&
+cart.length === 0 &&
+!options.allowEmpty
+) {
+
+showToast(
+  "Your cart is empty. Select a product first.",
+  "error"
+);
+
+pageName = "home";
+
+}
+
+currentPage = pageName;
+
+$all(".page").forEach(page => {
+page.classList.remove("active");
+});
+
+const page = $("#" + PAGE_IDS[pageName]);
+
+if (page) {
+page.classList.add("active");
+}
+
+closeMobileMenu();
+
+if (pageName === "home") {
+renderProducts();
+}
+
+if (pageName === "categories") {
+renderAllCategories();
+}
+
+if (pageName === "cart") {
+renderCart();
+}
+
+if (pageName === "checkout") {
+renderCheckoutSummary();
+}
+
+if (pageName === "orders") {
+renderOrders();
+}
+
+if (pageName === "admin" && adminLoggedIn) {
+renderAdminDashboard();
+}
+
+window.scrollTo({
+top: 0,
+behavior: "smooth"
+});
+
+}
+
 
 
 function navigateFromElement(element) {

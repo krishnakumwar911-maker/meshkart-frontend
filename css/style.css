@@ -3268,3 +3268,286 @@ img {
   }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================
+MESHKART PREMIUM ACCOUNT LOGIN
+========================================= */
+
+#accountPage .account-login-layout {
+display: grid;
+grid-template-columns: 1fr 0.85fr;
+gap: 48px;
+align-items: center;
+max-width: 1080px;
+margin: 36px auto 60px;
+}
+
+#accountPage .account-benefits {
+padding: 24px 0;
+}
+
+#accountPage .account-eyebrow {
+display: inline-block;
+margin-bottom: 18px;
+color: #1267a8;
+font-size: 11px;
+font-weight: 800;
+letter-spacing: 2px;
+}
+
+#accountPage .account-benefits h2 {
+margin: 0 0 18px;
+color: #102238;
+font-size: clamp(30px, 4vw, 43px);
+line-height: 1.18;
+letter-spacing: -1.4px;
+}
+
+#accountPage .account-benefits > p {
+max-width: 440px;
+color: #64748b;
+font-size: 15px;
+line-height: 1.8;
+}
+
+#accountPage .account-benefit-list {
+display: grid;
+gap: 24px;
+margin-top: 32px;
+}
+
+#accountPage .account-benefit {
+display: flex;
+align-items: flex-start;
+gap: 15px;
+}
+
+#accountPage .account-benefit-icon {
+display: grid;
+flex: 0 0 42px;
+width: 42px;
+height: 42px;
+place-items: center;
+border: 1px solid #dbeafe;
+border-radius: 13px;
+background: #eff6ff;
+color: #1267a8;
+font-size: 20px;
+font-weight: 800;
+}
+
+#accountPage .account-benefit h3 {
+margin: 1px 0 5px;
+color: #172b42;
+font-size: 15px;
+}
+
+#accountPage .account-benefit p {
+margin: 0;
+color: #64748b;
+font-size: 13px;
+line-height: 1.65;
+}
+
+#accountPage .account-card {
+width: 100%;
+max-width: 430px;
+justify-self: end;
+padding: 34px;
+border: 1px solid #e5eaf0;
+border-radius: 22px;
+background: #fff;
+box-shadow: 0 20px 60px rgba(15, 35, 60, 0.09);
+}
+
+#accountPage .account-brand {
+display: inline-flex;
+align-items: center;
+gap: 10px;
+margin-bottom: 30px;
+text-decoration: none;
+}
+
+#accountPage .account-card-icon {
+display: grid;
+width: 58px;
+height: 58px;
+margin-bottom: 22px;
+place-items: center;
+border-radius: 17px;
+background: #eff6ff;
+color: #1267a8;
+}
+
+#accountPage .account-card-icon svg {
+width: 30px;
+height: 30px;
+}
+
+#accountPage .account-card h2 {
+margin: 0 0 10px;
+color: #102238;
+font-size: 25px;
+letter-spacing: -0.6px;
+}
+
+#accountPage .account-card-description {
+margin: 0 0 26px;
+color: #64748b;
+font-size: 14px;
+line-height: 1.7;
+}
+
+#accountPage .google-login-button {
+display: flex;
+width: 100%;
+min-height: 52px;
+align-items: center;
+justify-content: center;
+gap: 12px;
+padding: 12px 16px;
+border: 1px solid #d7dee7;
+border-radius: 11px;
+background: #fff;
+color: #243447;
+font: inherit;
+font-size: 14px;
+font-weight: 700;
+cursor: pointer;
+transition: border-color 0.2s ease,
+box-shadow 0.2s ease,
+transform 0.2s ease;
+}
+
+#accountPage .google-login-button:hover {
+border-color: #9bbce0;
+box-shadow: 0 6px 20px rgba(15, 35, 60, 0.08);
+transform: translateY(-1px);
+}
+
+#accountPage .google-login-button:focus-visible,
+#accountPage .account-back-button:focus-visible {
+outline: 3px solid rgba(18, 103, 168, 0.3);
+outline-offset: 3px;
+}
+
+#accountPage .google-icon {
+width: 21px;
+height: 21px;
+flex: 0 0 21px;
+}
+
+#accountPage .account-login-message {
+min-height: 35px;
+margin: 14px 0 0;
+color: #64748b;
+font-size: 12px;
+line-height: 1.6;
+text-align: center;
+}
+
+#accountPage .account-divider {
+display: flex;
+align-items: center;
+gap: 12px;
+margin: 20px 0;
+color: #94a3b8;
+font-size: 9px;
+font-weight: 800;
+letter-spacing: 1.3px;
+white-space: nowrap;
+}
+
+#accountPage .account-divider::before,
+#accountPage .account-divider::after {
+height: 1px;
+flex: 1;
+background: #e8edf3;
+content: "";
+}
+
+#accountPage .account-privacy-note {
+margin: 0;
+color: #8491a1;
+font-size: 11px;
+line-height: 1.8;
+text-align: center;
+}
+
+#accountPage .account-privacy-note a {
+color: #1267a8;
+text-decoration: underline;
+text-underline-offset: 3px;
+}
+
+#accountPage .account-back-button {
+display: block;
+margin: 23px auto 0;
+padding: 8px 10px;
+border: 0;
+background: transparent;
+color: #1267a8;
+font: inherit;
+font-size: 13px;
+font-weight: 700;
+cursor: pointer;
+}
+
+@media (max-width: 760px) {
+#accountPage .account-login-layout {
+grid-template-columns: 1fr;
+gap: 25px;
+margin-top: 20px;
+}
+
+#accountPage .account-benefits {
+padding: 8px 0;
+}
+
+#accountPage .account-benefits h2 {
+font-size: 31px;
+}
+
+#accountPage .account-benefit-list {
+gap: 18px;
+margin-top: 24px;
+}
+
+#accountPage .account-card {
+max-width: 480px;
+justify-self: center;
+padding: 26px 21px;
+border-radius: 18px;
+}
+
+#accountPage .account-brand {
+margin-bottom: 25px;
+}
+}
+
+@media (prefers-reduced-motion: reduce) {
+#accountPage .google-login-button {
+transition: none;
+}
+}

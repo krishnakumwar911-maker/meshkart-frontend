@@ -802,23 +802,39 @@
 
           <h1>Admin Login</h1>
 
-          <p>Enter your administrator access code.</p>
+          <p>Enter your administrator credentials.</p>
 
-          <form id="adminLoginForm">
+<form id="adminLoginForm">
 
-            <div class="form-field">
+  <div class="form-field">
 
-              <label for="adminCode">Admin Access Code</label>
+    <label for="adminUsername">Admin Username</label>
 
-              <input
-                type="password"
-                id="adminCode"
-                placeholder="Enter your code"
-                required
-                autocomplete="off"
-              >
+    <input
+      type="text"
+      id="adminUsername"
+      name="username"
+      placeholder="Enter admin username"
+      required
+      autocomplete="username"
+    >
 
-            </div>
+  </div>
+
+  <div class="form-field">
+
+    <label for="adminCode">Admin Password</label>
+
+    <input
+      type="password"
+      id="adminCode"
+      name="password"
+      placeholder="Enter admin password"
+      required
+      autocomplete="current-password"
+    >
+
+  </div>
 
             <button class="primary-button full-width" type="submit">
               Login to Admin Panel

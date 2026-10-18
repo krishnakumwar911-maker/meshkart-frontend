@@ -2239,12 +2239,51 @@ function renderCheckoutSummary() {
 ===================================================== */
 
 $("#addressForm").addEventListener(
-  "submit",
-  event => {
+"submit",
+event => {
 
-    event.preventDefault();
+event.preventDefault();
 
-    const form = event.currentTarget;
+// TEMPORARY FRONTEND CHECK
+// Real Google authentication is not connected yet.
+const customerToken = localStorage.getItem(
+  "meshkart_customer_token"
+);
+
+if (!customerToken) {
+
+  sessionStorage.setItem(
+    "meshkart_pending_page",
+    "checkout"
+  );
+
+  showToast(
+    "Please sign in with Google before placing your order.",
+    "error"
+  );
+
+  showPage("account");
+
+  return;
+}
+
+const form = event.currentTarget;
+
+if (!form.reportValidity()) {
+  return;
+}
+
+if (cart.length === 0) {
+
+  showToast(
+    "Your cart is empty.",
+    "error"
+  );
+
+  showPage("home");
+
+  return;
+}
 
     if (!form.reportValidity()) {
       return;

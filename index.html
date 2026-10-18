@@ -1316,6 +1316,25 @@
 <div "#terms.html">
   </footer>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDZL8kcRMNreAdQdUJa7T1MWuPHGAs8Y5s",
+    authDomain: "meshkart-ccea8.firebaseapp.com",
+    projectId: "meshkart-ccea8",
+    storageBucket: "meshkart-ccea8.firebasestorage.app",
+    messagingSenderId: "37824120080",
+    appId: "1:37824120080:web:26dc3e06b07cb77ac21195",
+    measurementId: "G-8KM1NZJVVM"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  window.meshkartAuth = firebase.auth();
+</script>
+
 
   <script src="js/script.js"></script>
 

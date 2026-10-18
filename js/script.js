@@ -2791,59 +2791,171 @@ function renderTracking(orderId) {
 /* =====================================================
    ADMIN LOGIN
 ===================================================== */
+/* =====================================================
+   ADMIN LOGIN — BACKEND AUTHENTICATION
+===================================================== */
+
+const ADMIN_API_URL =
+  `${CONFIG.API_BASE_URL || "https://meshkart-backend.onrender.com"}/api/admin`;
+
+const ADMIN_TOKEN_KEY = "meshkart_admin_token";
+
+let adminToken = sessionStorage.getItem(ADMIN_TOKEN_KEY) || "";
+
+
+/* ADMIN LOGIN */
 
 $("#adminLoginForm").addEventListener(
   "submit",
-  event => {
+  async event => {
 
     event.preventDefault();
 
-    const code = $("#adminCode").value;
+    const username =
+      $("#adminUsername").value.trim();
 
-    const message = $("#adminLoginMessage");
+    const password =
+      $("#adminCode").value;
 
-    if (
-      CONFIG.ADMIN_CODE === "CHANGE_THIS_ADMIN_CODE"
-    ) {
+    const message =
+      $("#adminLoginMessage");
+
+    const submitButton =
+      event.currentTarget.querySelector(
+        'button[type="submit"]'
+      );
+
+    if (!username || !password) {
 
       message.textContent =
-        "Set your own code in CONFIG.ADMIN_CODE inside script.js first.";
+        "Please enter your username and password.";
 
-      message.className = "form-message error";
+      message.className =
+        "form-message error";
 
       return;
 
     }
 
-    if (code !== CONFIG.ADMIN_CODE) {
+    message.textContent =
+      "Verifying administrator credentials...";
 
-      message.textContent =
-        "Incorrect access code.";
+    message.className =
+      "form-message";
 
-      message.className = "form-message error";
-
-      return;
-
+    if (submitButton) {
+      submitButton.disabled = true;
     }
 
-    adminLoggedIn = true;
+    try {
 
-    $("#adminCode").value = "";
+      const response = await fetch(
+        `${ADMIN_API_URL}/login`,
+        {
+          method: "POST",
 
-    $("#adminLoginCard").classList.add("hidden");
+          headers: {
+            "Content-Type": "application/json"
+          },
 
-    $("#adminDashboard").classList.remove("hidden");
+          body: JSON.stringify({
+            username,
+            password
+          })
+        }
+      );
 
-    renderAdminDashboard();
+      const data = await response.json();
 
-    showToast(
-      "Admin demo login successful.",
-      "success"
-    );
+      if (
+        !response.ok ||
+        !data.success ||
+        !data.token
+      ) {
+
+        throw new Error(
+          data.message ||
+          data.error ||
+          "Invalid username or password."
+        );
+
+      }
+
+      adminToken = data.token;
+
+      sessionStorage.setItem(
+        ADMIN_TOKEN_KEY,
+        adminToken
+      );
+
+      const verifyResponse = await fetch(
+        `${ADMIN_API_URL}/me`,
+        {
+          headers: {
+            "Authorization":
+              `Bearer ${adminToken}`
+          }
+        }
+      );
+
+      if (!verifyResponse.ok) {
+
+        sessionStorage.removeItem(
+          ADMIN_TOKEN_KEY
+        );
+
+        adminToken = "";
+
+        throw new Error(
+          "Login verification failed. Please try again."
+        );
+
+      }
+
+      adminLoggedIn = true;
+
+      $("#adminCode").value = "";
+
+      $("#adminLoginCard").classList.add("hidden");
+
+      $("#adminDashboard").classList.remove("hidden");
+
+      message.textContent = "";
+
+      renderAdminDashboard();
+
+      showToast(
+        "Admin login successful.",
+        "success"
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Admin login error:",
+        error
+      );
+
+      message.textContent =
+        error.message ||
+        "Unable to connect to the server.";
+
+      message.className =
+        "form-message error";
+
+    } finally {
+
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
+
+    }
 
   }
 );
 
+
+/* ADMIN LOGOUT */
 
 $("#adminLogoutButton").addEventListener(
   "click",
@@ -2851,13 +2963,23 @@ $("#adminLogoutButton").addEventListener(
 
     adminLoggedIn = false;
 
+    adminToken = "";
+
+    sessionStorage.removeItem(
+      ADMIN_TOKEN_KEY
+    );
+
     $("#adminDashboard").classList.add("hidden");
 
     $("#adminLoginCard").classList.remove("hidden");
 
     $("#addProductForm").classList.add("hidden");
 
-    showToast("Logged out.");
+    $("#addProductForm").reset();
+
+    editingProductId = null;
+
+    showToast("Logged out successfully.");
 
   }
 );

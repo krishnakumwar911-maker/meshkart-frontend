@@ -3658,3 +3658,125 @@ function initializeApp() {
 
 
 initializeApp();
+
+
+
+
+/* =====================================================
+   MESHKART GOOGLE LOGIN — FIREBASE
+===================================================== */
+
+(function setupMeshKartGoogleLogin() {
+
+  const googleLoginButton = document.getElementById("googleLoginButton");
+  const loginMessage = document.getElementById("accountLoginMessage");
+
+  if (!googleLoginButton) {
+    console.warn("MeshKart: Google Login button not found.");
+    return;
+  }
+
+  if (!window.meshkartAuth) {
+    console.error("MeshKart: Firebase Authentication is not initialized.");
+
+    if (loginMessage) {
+      loginMessage.textContent =
+        "Login service is not ready. Please refresh and try again.";
+    }
+
+    return;
+  }
+
+  const auth = window.meshkartAuth;
+  const provider = new firebase.auth.GoogleAuthProvider();
+
+  googleLoginButton.addEventListener("click", async function () {
+
+    const originalText = googleLoginButton.textContent;
+
+    googleLoginButton.disabled = true;
+    googleLoginButton.textContent = "Connecting to Google...";
+
+    if (loginMessage) {
+      loginMessage.textContent = "";
+    }
+
+    try {
+      const result = await auth.signInWithPopup(provider);
+      const user = result.user;
+
+      if (!user) {
+        throw new Error("Google sign-in did not return a user.");
+      }
+
+      const idToken = await user.getIdToken();
+
+      /*
+       * Temporary client-side session.
+       * The backend must verify this ID token before
+       * accepting orders or other protected actions.
+       */
+      localStorage.setItem("meshkart_customer_token", idToken);
+
+      localStorage.setItem(
+        "meshkart_customer",
+        JSON.stringify({
+          uid: user.uid,
+          name: user.displayName || "",
+          email: user.email || "",
+          photo: user.photoURL || ""
+        })
+      );
+
+      if (loginMessage) {
+        loginMessage.textContent =
+          "Google sign-in successful!";
+      }
+
+      showToast("Signed in successfully with Google.", "success");
+
+      const pendingPage =
+        sessionStorage.getItem("meshkart_pending_page");
+
+      sessionStorage.removeItem("meshkart_pending_page");
+
+      if (
+        pendingPage &&
+        typeof PAGE_IDS !== "undefined" &&
+        PAGE_IDS[pendingPage]
+      ) {
+        showPage(pendingPage);
+      } else {
+        showPage("home");
+      }
+
+    } catch (error) {
+      console.error("MeshKart Google sign-in error:", error);
+
+      let message =
+        "Google sign-in failed. Please try again.";
+
+      if (error.code === "auth/popup-closed-by-user") {
+        message = "Sign-in was cancelled. Please try again.";
+      } else if (error.code === "auth/unauthorized-domain") {
+        message =
+          "This website domain is not authorized in Firebase.";
+      } else if (error.code === "auth/popup-blocked") {
+        message =
+          "Google sign-in popup was blocked. Allow popups and try again.";
+      }
+
+      if (loginMessage) {
+        loginMessage.textContent = message;
+      }
+
+      showToast(message, "error");
+
+    } finally {
+      googleLoginButton.disabled = false;
+      googleLoginButton.textContent = originalText;
+    }
+
+  });
+
+})();

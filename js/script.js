@@ -4130,7 +4130,13 @@ async function loadAdminOrders() {
                 type="button"
                 class="admin-order-save-status"
                 data-order-id="${Number(order.id)}"
-              >Save Status</button>
+              >Save Status</button>             
+              <button
+                type="button"
+                class="admin-order-cancel-button"
+                data-cancel-admin-order="${Number(order.id)}"
+                ${["CANCELLED", "DELIVERED"].includes(status) ? "disabled" : ""}
+              >Cancel Order</button>
             </div>
           `;
 

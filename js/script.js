@@ -3082,10 +3082,15 @@ function renderTracking(orderId) {
   }
 
 
-  const currentIndex = TRACKING_STEPS.indexOf(
-    order.status
-  );
+  const normalizedStatus = String(order.status || "")
+  .trim()
+  .toLowerCase()
+  .replace(/_/g, " ")
+  .replace(/\s+/g, " ");
 
+const currentIndex = TRACKING_STEPS.findIndex(
+  step => step.toLowerCase() === normalizedStatus
+);
 
   const timeline = TRACKING_STEPS.map(
     (step, index) => {

@@ -3329,10 +3329,23 @@ $("#adminLoginForm").addEventListener(
 
       renderAdminDashboard();
 
-      showToast(
-        "Admin login successful.",
-        "success"
-      );
+loadAdminOrders();
+/* ADMIN ORDERS REFRESH */
+
+const refreshAdminOrdersButton = $(
+  "#refreshAdminOrdersButton"
+);
+
+if (refreshAdminOrdersButton) {
+  refreshAdminOrdersButton.addEventListener(
+    "click",
+    loadAdminOrders
+  );
+}
+showToast(
+  "Admin login successful.",
+  "success"
+);
 
     } catch (error) {
 

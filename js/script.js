@@ -3082,7 +3082,9 @@ function renderTracking(orderId) {
   }
 
 
-  const normalizedStatus = String(order.status || "")
+  const normalizedStatus = String(
+  order.order_status || order.status || ""
+)
   .trim()
   .toLowerCase()
   .replace(/_/g, " ")
@@ -3113,13 +3115,11 @@ const currentIndex = TRACKING_STEPS.findIndex(
       }
 
       if (
-        step === order.status &&
-        step !== "Order Placed"
-      ) {
-
-        note = "Status recorded by the order system";
-
-      }
+  step.toLowerCase() === normalizedStatus &&
+  step !== "Order Placed"
+) {
+  note = "Status recorded by the order system";
+}
 
       return `
 

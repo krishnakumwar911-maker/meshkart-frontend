@@ -3829,7 +3829,238 @@ function renderAdminDashboard() {
   `).join("");
 
 }
+/* =====================================================
+   ADMIN ORDER MANAGEMENT
+===================================================== */
 
+async function loadAdminOrders() {
+
+  if (!adminLoggedIn || !adminToken) {
+    return;
+  }
+
+  const ordersList = $("#adminOrdersList");
+  const loading = $("#adminOrdersLoading");
+  const errorBox = $("#adminOrdersError");
+  const emptyState = $("#adminOrdersEmpty");
+
+  try {
+
+    if (loading) {
+      loading.classList.remove("hidden");
+    }
+
+    if (errorBox) {
+      errorBox.classList.add("hidden");
+    }
+
+    if (emptyState) {
+      emptyState.classList.add("hidden");
+    }
+
+    const response = await fetch(
+      `${CONFIG.API_BASE_URL}/api/admin/orders`,
+      {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${adminToken}`,
+          "Accept": "application/json"
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(
+        data.message || "Unable to load orders."
+      );
+    }
+
+    const serverOrders = Array.isArray(data.orders)
+      ? data.orders
+      : [];
+
+    // Update order statistics
+    const totalElement = $("#adminTotalOrders");
+    const pendingElement = $("#adminPendingOrders");
+    const processingElement = $("#adminProcessingOrders");
+    const deliveredElement = $("#adminDeliveredOrders");
+
+    const normalizeStatus = status =>
+      String(status || "")
+        .trim()
+        .toUpperCase()
+        .replace(/[\s-]+/g, "_");
+
+    if (totalElement) {
+      totalElement.textContent =
+        serverOrders.length.toLocaleString("en-IN");
+    }
+
+    if (pendingElement) {
+      pendingElement.textContent =
+        serverOrders.filter(order =>
+          normalizeStatus(order.order_status) === "ORDER_PLACED"
+        ).length.toLocaleString("en-IN");
+    }
+
+    if (processingElement) {
+      processingElement.textContent =
+        serverOrders.filter(order =>
+          normalizeStatus(order.order_status) === "PROCESSING"
+        ).length.toLocaleString("en-IN");
+    }
+
+    if (deliveredElement) {
+      deliveredElement.textContent =
+        serverOrders.filter(order =>
+          normalizeStatus(order.order_status) === "DELIVERED"
+        ).length.toLocaleString("en-IN");
+    }
+
+    // Keep the existing admin order count in sync
+    const orderCount = $("#adminOrderCount");
+
+    if (orderCount) {
+      orderCount.textContent =
+        serverOrders.length.toLocaleString("en-IN");
+    }
+
+    // Save orders for search and filtering
+    window.meshkartAdminOrders = serverOrders;
+
+    if (ordersList) {
+      ordersList.innerHTML = "";
+
+      if (serverOrders.length === 0) {
+
+        if (emptyState) {
+          emptyState.classList.remove("hidden");
+        }
+
+      } else {
+
+        serverOrders.forEach(order => {
+
+          const card = document.createElement("article");
+          card.className = "admin-order-card";
+
+          const orderNumber = String(
+            order.order_number || order.id || ""
+          );
+
+          const status = normalizeStatus(order.order_status);
+
+          const allowedStatuses = [
+            "ORDER_PLACED",
+            "PROCESSING",
+            "SHIPPED",
+            "IN_TRANSIT",
+            "OUT_FOR_DELIVERY",
+            "DELIVERED"
+          ];
+
+          const statusOptions = allowedStatuses.map(value => `
+            <option
+              value="${value}"
+              ${status === value ? "selected" : ""}
+            >${value.replace(/_/g, " ")}</option>
+          `).join("");
+
+          const items = Array.isArray(order.items)
+            ? order.items.map(item => `
+                <li>
+                  ${escapeHTML(item.product_name || item.name || "Product")}
+                  × ${Number(item.quantity) || 1}
+                </li>
+              `).join("")
+            : "";
+
+          card.innerHTML = `
+            <div class="admin-order-card-header">
+              <div>
+                <strong>Order #${escapeHTML(orderNumber)}</strong>
+                <p>${escapeHTML(order.customer_name || "Customer")}</p>
+              </div>
+              <strong>${formatPrice(Number(order.total_amount) || 0)}</strong>
+            </div>
+
+            <p>
+              <strong>Phone:</strong>
+              ${escapeHTML(order.phone || "Not provided")}
+            </p>
+
+            <p>
+              <strong>Email:</strong>
+              ${escapeHTML(order.email || "Not provided")}
+            </p>
+
+            <p>
+              <strong>Address:</strong>
+              ${escapeHTML([
+                order.address,
+                order.landmark,
+                order.city,
+                order.state,
+                order.pincode
+              ].filter(Boolean).join(", ") || "Not provided")}
+            </p>
+
+            <p>
+              <strong>Payment:</strong>
+              ${escapeHTML(order.payment_method || "COD")}
+              (${escapeHTML(order.payment_status || "PENDING")})
+            </p>
+
+            <div class="admin-order-items">
+              <strong>Items</strong>
+              <ul>${items || "<li>Item details unavailable</li>"}</ul>
+            </div>
+
+            <div class="admin-order-status-controls">
+              <label>
+                Order Status
+                <select class="admin-order-status-select">
+                  ${statusOptions}
+                </select>
+              </label>
+
+              <button
+                type="button"
+                class="admin-order-save-status"
+                data-order-id="${Number(order.id)}"
+              >Save Status</button>
+            </div>
+          `;
+
+          ordersList.appendChild(card);
+
+        });
+
+      }
+    }
+
+  } catch (error) {
+
+    console.error("Admin orders loading error:", error);
+
+    if (errorBox) {
+      errorBox.textContent =
+        error.message || "Unable to load orders.";
+
+      errorBox.classList.remove("hidden");
+    }
+
+  } finally {
+
+    if (loading) {
+      loading.classList.add("hidden");
+    }
+
+  }
+
+}
 
 /* =====================================================
    ADMIN EDIT PRODUCT

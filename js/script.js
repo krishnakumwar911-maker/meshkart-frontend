@@ -3009,14 +3009,21 @@ function renderOrders() {
 
         <div class="order-card-footer-actions">
 
-          <button
-            class="secondary-button"
-            data-track-order="${escapeHTML(order.id)}"
-          >
-            Track Order
-          </button>
+  <button
+    class="secondary-button"
+    data-track-order="${escapeHTML(order.id)}"
+  >
+    Track Order
+  </button>
 
-        </div>
+  <button
+    class="secondary-button"
+    data-cancel-order="${escapeHTML(order.id)}"
+  >
+    Cancel Order
+  </button>
+
+</div>
 
       </div>
 
@@ -3039,6 +3046,85 @@ document.addEventListener("click", event => {
 
   renderTracking(
     button.dataset.trackOrder
+  );
+
+});
+/* =====================================================
+   CANCEL ORDER VIA WHATSAPP
+===================================================== */
+
+document.addEventListener("click", event => {
+
+  const button = event.target.closest(
+    "[data-cancel-order]"
+  );
+
+  if (!button) {
+    return;
+  }
+
+  const orderId = button.dataset.cancelOrder;
+
+  const order = orders.find(
+    item => String(item.id) === String(orderId)
+  );
+
+  if (!order) {
+    showToast("Order not found.", "error");
+    return;
+  }
+
+  const items = Array.isArray(order.items)
+    ? order.items
+    : [];
+
+  const productDetails = items.map((item, index) => {
+    return `${index + 1}. ${item.name}
+Quantity: ${Number(item.quantity) || 0}
+Price: ${formatPrice(item.price)}`;
+  }).join("\n\n");
+
+  const orderDate = order.createdAt
+    ? new Date(order.createdAt).toLocaleDateString("en-IN")
+    : "Not available";
+
+  const totalAmount = formatPrice(
+    order.subtotal || 0
+  );
+
+  const paymentMethod =
+    order.paymentMethod ||
+    order.payment_method ||
+    "Cash on Delivery";
+
+  const currentStatus =
+    order.order_status ||
+    order.status ||
+    "ORDER_PLACED";
+
+  const message = [
+    "CANCEL ORDER REQUEST",
+    "",
+    `Order ID: ${order.id}`,
+    `Order Date: ${orderDate}`,
+    "",
+    "ORDER DETAILS:",
+    productDetails || "Product details unavailable",
+    "",
+    `Total Amount: ${totalAmount}`,
+    `Payment Method: ${paymentMethod}`,
+    `Current Status: ${currentStatus}`,
+    "",
+    "I want to cancel this order. Please review my cancellation request."
+  ].join("\n");
+
+  const whatsappURL =
+    "https://wa.me/919113313851?text=" +
+    encodeURIComponent(message);
+
+  window.open(
+    whatsappURL,
+    "_blank"
   );
 
 });

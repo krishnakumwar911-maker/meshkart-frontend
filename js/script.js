@@ -4074,7 +4074,96 @@ async function loadAdminOrders() {
   }
 
 }
+/* ADMIN ORDERS REFRESH */
 
+const refreshAdminOrdersButton = $(
+  "#refreshAdminOrdersButton"
+);
+
+if (refreshAdminOrdersButton) {
+  refreshAdminOrdersButton.addEventListener(
+    "click",
+    loadAdminOrders
+  );
+}
+
+
+/* =====================================================
+   ADMIN: SAVE ORDER STATUS
+===================================================== */
+
+document.addEventListener("click", async function (event) {
+
+  const button = event.target.closest(
+    ".admin-order-save-status"
+  );
+
+  if (!button) return;
+
+  const orderId = button.dataset.orderId;
+  const card = button.closest(".admin-order-card");
+
+  const select = card?.querySelector(
+    ".admin-order-status-select"
+  );
+
+  if (!orderId || !select) {
+    showToast("Order details are missing.", "error");
+    return;
+  }
+
+  const status = select.value;
+
+  button.disabled = true;
+  button.textContent = "Saving...";
+
+  try {
+
+    const response = await fetch(
+      `${CONFIG.API_BASE_URL}/api/admin/orders/${encodeURIComponent(orderId)}/status`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${adminToken}`,
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({ status })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(
+        data.message || "Unable to update order status."
+      );
+    }
+
+    showToast(
+      "Order status updated successfully.",
+      "success"
+    );
+
+    await loadAdminOrders();
+
+  } catch (error) {
+
+    console.error("Order status update error:", error);
+
+    showToast(
+      error.message || "Unable to update order status.",
+      "error"
+    );
+
+  } finally {
+
+    button.disabled = false;
+    button.textContent = "Save Status";
+
+  }
+
+});
 /* =====================================================
    ADMIN EDIT PRODUCT
 ===================================================== */

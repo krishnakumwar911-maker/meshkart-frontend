@@ -750,9 +750,8 @@ renderCart();
 if (pageName === "checkout") {
 renderCheckoutSummary();
 }
-
 if (pageName === "orders") {
-renderOrders();
+loadCustomerOrders();
 }
 
 if (pageName === "admin" && adminLoggedIn) {
@@ -2324,212 +2323,315 @@ function renderCheckoutSummary() {
 }
 
 
-/* =====================================================
-   PLACE ORDER — FRONTEND DEMO ONLY
+ /* =====================================================
+   PLACE ORDER — BACKEND + NEON DATABASE
 ===================================================== */
 
-$("#addressForm").addEventListener(
-"submit",
-event => {
+$("#addressForm").addEventListener("submit", async event => {
 
-event.preventDefault();
+  event.preventDefault();
 
-// TEMPORARY FRONTEND CHECK
-// Real Google authentication is not connected yet.
-const customerToken = localStorage.getItem(
-  "meshkart_customer_token"
-);
+  const form = event.currentTarget;
 
-if (!customerToken) {
-
-  sessionStorage.setItem(
-    "meshkart_pending_page",
-    "checkout"
+  // 1. Check customer authentication
+  const customerToken = localStorage.getItem(
+    "meshkart_customer_token"
   );
 
-  showToast(
-    "Please sign in with Google before placing your order.",
-    "error"
+  if (!customerToken) {
+
+    sessionStorage.setItem(
+      "meshkart_pending_page",
+      "checkout"
+    );
+
+    showToast(
+      "Please sign in with Google before placing your order.",
+      "error"
+    );
+
+    showPage("account");
+    return;
+  }
+
+  // 2. Validate form
+  if (!form.reportValidity()) {
+    return;
+  }
+
+  // 3. Check cart
+  if (cart.length === 0) {
+
+    showToast("Your cart is empty.", "error");
+    showPage("home");
+    return;
+  }
+
+  // 4. Get current cart items
+  const cartItems = getCartItemsDetailed();
+
+  if (!cartItems.length) {
+
+    showToast(
+      "Unable to read your cart. Please refresh and try again.",
+      "error"
+    );
+
+    return;
+  }
+
+  // 5. Only allow actual numeric database product IDs
+  const invalidProduct = cartItems.some(item => {
+
+    const id = String(item.product.id ?? "");
+
+    return !/^[1-9]\d*$/.test(id);
+
+  });
+
+  if (invalidProduct) {
+
+    showToast(
+      "Some cart products are demo products. Remove them and add products from the live catalogue.",
+      "error"
+    );
+
+    return;
+  }
+
+  // 6. Validate quantities
+  const invalidQuantity = cartItems.some(item => {
+
+    const quantity = Number(item.quantity);
+
+    return (
+      !Number.isInteger(quantity) ||
+      quantity < 1
+    );
+
+  });
+
+  if (invalidQuantity) {
+
+    showToast(
+      "One or more product quantities are invalid.",
+      "error"
+    );
+
+    return;
+  }
+
+  // 7. Collect customer details
+  const formData = new FormData(form);
+
+  const customer = {
+
+    name: String(
+      formData.get("customerName") || ""
+    ).trim(),
+
+    phone: String(
+      formData.get("customerPhone") || ""
+    ).trim(),
+
+    email: String(
+      formData.get("customerEmail") || ""
+    ).trim(),
+
+    pincode: String(
+      formData.get("pincode") || ""
+    ).trim(),
+
+    state: String(
+      formData.get("state") || ""
+    ).trim(),
+
+    city: String(
+      formData.get("city") || ""
+    ).trim(),
+
+    address: String(
+      formData.get("address") || ""
+    ).trim(),
+
+    landmark: String(
+      formData.get("landmark") || ""
+    ).trim(),
+
+    payment: "cod"
+
+  };
+
+  // 8. Prevent accidental repeated submissions
+  const submitButton = form.querySelector(
+    'button[type="submit"]'
   );
 
-  showPage("account");
+  const originalButtonText = submitButton
+    ? submitButton.textContent
+    : "";
 
-  return;
-}
+  if (submitButton) {
 
-const form = event.currentTarget;
-
-if (!form.reportValidity()) {
-  return;
-}
-
-if (cart.length === 0) {
-
-  showToast(
-    "Your cart is empty.",
-    "error"
-  );
-
-  showPage("home");
-
-  return;
-}
-
-    if (!form.reportValidity()) {
+    if (submitButton.disabled) {
       return;
     }
 
-    if (cart.length === 0) {
+    submitButton.disabled = true;
+    submitButton.textContent = "Placing order...";
 
-      showToast(
-        "Your cart is empty.",
-        "error"
+  }
+
+  try {
+
+    // 9. Send order to the real backend
+    const response = await fetch(
+      `${CONFIG.API_BASE_URL}/api/orders`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${customerToken}`
+        },
+
+        body: JSON.stringify({
+
+          customer,
+
+          items: cartItems.map(item => ({
+
+            productId: String(item.product.id),
+            quantity: Number(item.quantity)
+
+          }))
+
+        })
+
+      }
+    );
+
+    const result = await response.json().catch(() => ({}));
+
+    // 10. Handle backend errors
+    if (!response.ok || !result.order) {
+
+      throw new Error(
+        result.message ||
+        result.error ||
+        "The server could not place your order."
       );
-
-      showPage("home");
-
-      return;
 
     }
 
-    const formData = new FormData(form);
+    const savedOrder = result.order;
 
-    const customer = {
-
-      name: String(
-        formData.get("customerName") || ""
-      ).trim(),
-
-      phone: String(
-        formData.get("customerPhone") || ""
-      ).trim(),
-
-      email: String(
-        formData.get("customerEmail") || ""
-      ).trim(),
-
-      pincode: String(
-        formData.get("pincode") || ""
-      ).trim(),
-
-      state: String(
-        formData.get("state") || ""
-      ).trim(),
-
-      city: String(
-        formData.get("city") || ""
-      ).trim(),
-
-      address: String(
-        formData.get("address") || ""
-      ).trim(),
-
-      landmark: String(
-        formData.get("landmark") || ""
-      ).trim(),
-
-      payment: String(
-        formData.get("payment") || "cod"
-      )
-
-    };
-
-
-    const cartItems = getCartItemsDetailed();
-
-    const insufficientStock = cartItems.some(item => {
-
-      return (
-        Number(item.product.stock) <
-        Number(item.quantity)
-      );
-
-    });
-
-    if (insufficientStock) {
-
-      showToast(
-        "Some products no longer have sufficient stock.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
+    // 11. Create a frontend-compatible order from server data
     const order = {
 
-      id: generateId("ORD"),
+      id: String(
+        savedOrder.orderNumber ||
+        savedOrder.order_number ||
+        savedOrder.id
+      ),
 
-      createdAt: new Date().toISOString(),
+      databaseId: savedOrder.id,
+
+      orderNumber:
+        savedOrder.orderNumber ||
+        savedOrder.order_number ||
+        String(savedOrder.id),
+
+      createdAt:
+        savedOrder.createdAt ||
+        savedOrder.created_at ||
+        new Date().toISOString(),
 
       customer,
 
-      items: cartItems.map(item => ({
+      items: (savedOrder.items || []).map(item => {
 
-        productId: item.product.id,
+        const product = products.find(
+          product =>
+            String(product.id) === String(item.productId)
+        );
 
-        name: item.product.name,
+        return {
 
-        price: Number(item.product.price),
+          productId: item.productId,
 
-        quantity: Number(item.quantity),
+          name: item.name,
 
-        image: safeImageURL(item.product.image),
+          price: Number(item.price),
 
-        size: item.size || "",
+          quantity: Number(item.quantity),
 
-        color: item.color || ""
+          image: product
+            ? safeImageURL(product.image)
+            : "",
 
-      })),
+          size: "",
+          color: ""
 
-      subtotal: getCartSubtotal(),
+        };
 
-      status: "Pending",
+      }),
 
-      paymentStatus: "Not Processed",
+      subtotal: Number(savedOrder.subtotal || 0),
+
+      deliveryCharge: Number(
+        savedOrder.deliveryCharge || 0
+      ),
+
+      totalAmount: Number(
+        savedOrder.totalAmount ??
+        savedOrder.total_amount ??
+        savedOrder.subtotal ??
+        0
+      ),
+
+      status:
+        savedOrder.status ||
+        "ORDER_PLACED",
+
+      paymentMethod:
+        savedOrder.paymentMethod ||
+        "COD",
+
+      paymentStatus:
+        savedOrder.paymentStatus ||
+        "PENDING",
 
       tracking: {
 
         confirmedAt: null,
-
         shippedAt: null,
-
         deliveredAt: null,
-
         estimatedDelivery: null
 
       }
 
     };
 
-
+    // 12. Update local order cache only after server success
     orders.unshift(order);
 
     if (!persistOrders()) {
 
-      orders.shift();
-
-      return;
+      // The database order already exists.
+      // Do not tell the customer that order creation failed.
+      console.error(
+        "Order was saved on the server, but local caching failed."
+      );
 
     }
 
-
-    /*
-      DEMO BEHAVIOUR:
-
-      This does NOT send an email.
-      It does NOT create an actual Meesho order.
-
-      Those functions require backend integration.
-    */
-
-
+    // 13. Update local product stock for display only
     cartItems.forEach(item => {
 
       const product = products.find(
-        product => product.id === item.product.id
+        product =>
+          String(product.id) === String(item.product.id)
       );
 
       if (product) {
@@ -2544,17 +2646,16 @@ if (cart.length === 0) {
 
     });
 
-
     persistProducts();
 
-
+    // 14. Clear cart after successful server response
     cart = [];
 
     persistCart();
 
     updateCartCount();
 
-
+    // 15. Show confirmation
     renderConfirmation(order);
 
     form.reset();
@@ -2562,12 +2663,34 @@ if (cart.length === 0) {
     showPage("confirmation");
 
     showToast(
-      "Demo order request recorded.",
+      "Your order has been placed successfully!",
       "success"
     );
 
+  } catch (error) {
+
+    console.error("Place order error:", error);
+
+    showToast(
+      error.message ||
+      "Unable to place your order. Please try again.",
+      "error"
+    );
+
+  } finally {
+
+    if (submitButton) {
+
+      submitButton.disabled = false;
+
+      submitButton.textContent =
+        originalButtonText || "Place Order";
+
+    }
+
   }
-);
+
+});
 
 
 /* =====================================================
@@ -2577,15 +2700,24 @@ if (cart.length === 0) {
 function renderConfirmation(order) {
 
   $("#confirmationMessage").textContent =
-    "Your order request has been recorded in this browser demo. No real order has been sent yet.";
+    "Your order has been placed successfully. Your order details have been saved.";
+
+  const orderNumber =
+    order.orderNumber || order.id;
+
+  const totalAmount = Number(
+    order.totalAmount ??
+    order.subtotal ??
+    0
+  );
 
   $("#confirmationDetails").innerHTML = `
 
     <div class="confirmation-detail-row">
 
-      <span>Order ID</span>
+      <span>Order Number</span>
 
-      <strong>${escapeHTML(order.id)}</strong>
+      <strong>${escapeHTML(orderNumber)}</strong>
 
     </div>
 
@@ -2603,7 +2735,15 @@ function renderConfirmation(order) {
 
       <span>Total Amount</span>
 
-      <strong>${formatPrice(order.subtotal)}</strong>
+      <strong>${formatPrice(totalAmount)}</strong>
+
+    </div>
+
+    <div class="confirmation-detail-row">
+
+      <span>Payment</span>
+
+      <strong>Cash on Delivery</strong>
 
     </div>
 
@@ -2617,7 +2757,9 @@ function renderConfirmation(order) {
 
   `;
 
-}
+}   
+
+
 
 
 /* =====================================================
@@ -2648,7 +2790,123 @@ function statusClass(status) {
 
 }
 
+/* =====================================================
+   LOAD CUSTOMER ORDERS FROM BACKEND
+===================================================== */
 
+async function loadCustomerOrders() {
+  const container = $("#ordersList");
+  const token = localStorage.getItem("meshkart_customer_token");
+
+  if (!container) return;
+
+  if (!token) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <h3>Login required</h3>
+        <p>Please sign in to view your orders.</p>
+        <button class="primary-button" data-page="account">
+          Sign In
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="empty-state">
+      <h3>Loading your orders...</h3>
+      <p>Please wait while we retrieve your order history.</p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch(
+      `${CONFIG.API_BASE_URL}/api/orders/my`,
+      {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      }
+    );
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(
+        result.message ||
+        result.error ||
+        "Could not load your orders."
+      );
+    }
+
+    if (!Array.isArray(result.orders)) {
+      throw new Error("Unexpected response received from the server.");
+    }
+
+    orders = result.orders.map(order => ({
+      ...order,
+      id: String(
+        order.orderNumber ||
+        order.order_number ||
+        order.id
+      ),
+      databaseId: order.id,
+      orderNumber:
+        order.orderNumber ||
+        order.order_number ||
+        String(order.id),
+      createdAt:
+        order.createdAt ||
+        order.created_at ||
+        new Date().toISOString(),
+      subtotal: Number(
+        order.subtotal ??
+        order.totalAmount ??
+        order.total_amount ??
+        0
+      ),
+      totalAmount: Number(
+        order.totalAmount ??
+        order.total_amount ??
+        order.subtotal ??
+        0
+      ),
+      status: order.status || "ORDER_PLACED",
+      items: Array.isArray(order.items)
+        ? order.items.map(item => {
+            const product = products.find(
+              p => String(p.id) === String(item.productId ?? item.product_id)
+            );
+
+            return {
+              ...item,
+              name: item.name || item.productName || item.product_name || "Product",
+              price: Number(item.price || 0),
+              quantity: Number(item.quantity || 1),
+              image: item.image || (product ? product.image : "")
+            };
+          })
+        : []
+    }));
+
+    renderOrders();
+
+  } catch (error) {
+    console.error("Load customer orders error:", error);
+
+    container.innerHTML = `
+      <div class="empty-state">
+        <h3>Unable to load orders</h3>
+        <p>${escapeHTML(error.message)}</p>
+        <button class="primary-button" onclick="loadCustomerOrders()">
+          Try Again
+        </button>
+      </div>
+    `;
+  }
+}
 function renderOrders() {
 
   const container = $("#ordersList");

@@ -2853,6 +2853,7 @@ async function loadCustomerOrders() {
         order.id
       ),
       databaseId: order.id,
+       order_status: order.order_status || order.status || "ORDER_PLACED",
       orderNumber:
         order.orderNumber ||
         order.order_number ||
@@ -2873,7 +2874,7 @@ async function loadCustomerOrders() {
         order.subtotal ??
         0
       ),
-      status: order.status || "ORDER_PLACED",
+      status: order.order_status || order.status || "ORDER_PLACED",
       items: Array.isArray(order.items)
         ? order.items.map(item => {
             const product = products.find(

@@ -1273,7 +1273,368 @@
           <div class="admin-empty-state hidden" id="adminEmptyProducts">
             No products added yet. Click Add Product to get started.
           </div>
+<!-- =====================================================
+     ADMIN ORDER MANAGEMENT
+===================================================== -->
 
+<section class="admin-orders-section" id="adminOrdersSection">
+
+  <div class="admin-section-heading admin-orders-heading">
+
+    <div>
+      <span class="section-kicker">ORDER CONTROL</span>
+      <h2>Order Management</h2>
+      <p>View customer orders and manage their delivery status.</p>
+    </div>
+
+    <button
+      type="button"
+      class="secondary-button"
+      id="refreshAdminOrdersButton"
+    >
+      ↻ Refresh Orders
+    </button>
+
+  </div>
+
+
+  <!-- ORDER SUMMARY -->
+
+  <div class="admin-order-stats">
+
+    <div class="admin-order-stat-card">
+      <span>Total Orders</span>
+      <strong id="adminTotalOrders">0</strong>
+    </div>
+
+    <div class="admin-order-stat-card">
+      <span>Pending Orders</span>
+      <strong id="adminPendingOrders">0</strong>
+    </div>
+
+    <div class="admin-order-stat-card">
+      <span>Processing</span>
+      <strong id="adminProcessingOrders">0</strong>
+    </div>
+
+    <div class="admin-order-stat-card">
+      <span>Delivered</span>
+      <strong id="adminDeliveredOrders">0</strong>
+    </div>
+
+  </div>
+
+
+  <!-- SEARCH AND FILTER -->
+
+  <div class="admin-orders-toolbar">
+
+    <div class="admin-orders-search">
+
+      <label for="adminOrderSearch">
+        Search Orders
+      </label>
+
+      <input
+        type="search"
+        id="adminOrderSearch"
+        placeholder="Search order number, customer or phone..."
+        autocomplete="off"
+      >
+
+    </div>
+
+
+    <div class="admin-orders-filter">
+
+      <label for="adminOrderStatusFilter">
+        Filter by Status
+      </label>
+
+      <select id="adminOrderStatusFilter">
+
+        <option value="ALL">All Orders</option>
+
+        <option value="ORDER_PLACED">Order Placed</option>
+
+        <option value="PROCESSING">Processing</option>
+
+        <option value="SHIPPED">Shipped</option>
+
+        <option value="IN_TRANSIT">In Transit</option>
+
+        <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+
+        <option value="DELIVERED">Delivered</option>
+
+        <option value="CANCELLED">Cancelled</option>
+
+      </select>
+
+    </div>
+
+  </div>
+
+
+  <!-- LOADING MESSAGE -->
+
+  <div
+    class="admin-orders-message hidden"
+    id="adminOrdersLoading"
+    role="status"
+  >
+    Loading orders...
+  </div>
+
+
+  <!-- ERROR MESSAGE -->
+
+  <div
+    class="admin-orders-message error hidden"
+    id="adminOrdersError"
+    role="alert"
+  >
+    Unable to load orders.
+  </div>
+
+
+  <!-- EMPTY STATE -->
+
+  <div
+    class="admin-orders-empty hidden"
+    id="adminOrdersEmpty"
+  >
+
+    <div class="admin-orders-empty-icon">📦</div>
+
+    <h3>No Orders Found</h3>
+
+    <p>
+      Orders will appear here when customers place them.
+    </p>
+
+  </div>
+
+
+  <!-- ORDER CARDS -->
+
+  <div
+    class="admin-orders-list"
+    id="adminOrdersList"
+    aria-live="polite"
+  ></div>
+
+
+  <!-- ORDER CARD TEMPLATE -->
+
+  <template id="adminOrderCardTemplate">
+
+    <article class="admin-order-card">
+
+      <div class="admin-order-card-header">
+
+        <div class="admin-order-identity">
+
+          <span class="admin-order-label">
+            ORDER NUMBER
+          </span>
+
+          <h3 class="admin-order-number"></h3>
+
+          <p class="admin-order-date"></p>
+
+        </div>
+
+
+        <div class="admin-order-status-area">
+
+          <span class="admin-order-status-badge"></span>
+
+          <span class="admin-order-payment-badge"></span>
+
+        </div>
+
+      </div>
+
+
+      <!-- CUSTOMER INFORMATION -->
+
+      <div class="admin-order-card-body">
+
+        <section class="admin-order-info">
+
+          <h4>Customer Information</h4>
+
+          <div class="admin-order-info-row">
+            <span>Customer</span>
+            <strong data-order-field="customer"></strong>
+          </div>
+
+          <div class="admin-order-info-row">
+            <span>Phone</span>
+            <strong data-order-field="phone"></strong>
+          </div>
+
+          <div class="admin-order-info-row">
+            <span>Email</span>
+            <strong data-order-field="email"></strong>
+          </div>
+
+        </section>
+
+
+        <!-- DELIVERY ADDRESS -->
+
+        <section class="admin-order-info">
+
+          <h4>Delivery Address</h4>
+
+          <p
+            class="admin-order-address"
+            data-order-field="address"
+          ></p>
+
+          <div class="admin-order-info-row">
+            <span>City</span>
+            <strong data-order-field="city"></strong>
+          </div>
+
+          <div class="admin-order-info-row">
+            <span>State</span>
+            <strong data-order-field="state"></strong>
+          </div>
+
+          <div class="admin-order-info-row">
+            <span>Pincode</span>
+            <strong data-order-field="pincode"></strong>
+          </div>
+
+          <div class="admin-order-info-row">
+            <span>Landmark</span>
+            <strong data-order-field="landmark"></strong>
+          </div>
+
+        </section>
+
+      </div>
+
+
+      <!-- ORDER ITEMS -->
+
+      <section class="admin-order-items-section">
+
+        <h4>Ordered Products</h4>
+
+        <div class="admin-order-items"></div>
+
+      </section>
+
+
+      <!-- ORDER TOTAL -->
+
+      <div class="admin-order-total-section">
+
+        <div>
+          <span>Subtotal</span>
+          <strong data-order-field="subtotal"></strong>
+        </div>
+
+        <div>
+          <span>Delivery Charge</span>
+          <strong data-order-field="delivery"></strong>
+        </div>
+
+        <div class="admin-order-grand-total">
+          <span>Total Amount</span>
+          <strong data-order-field="total"></strong>
+        </div>
+
+      </div>
+
+
+      <!-- UPDATE STATUS -->
+
+      <div class="admin-order-update-section">
+
+        <div class="admin-order-update-heading">
+
+          <div>
+            <h4>Update Order Status</h4>
+            <p>
+              The customer’s tracking status will update
+              after the change is saved.
+            </p>
+          </div>
+
+        </div>
+
+
+        <div class="admin-order-update-controls">
+
+          <div class="form-field">
+
+            <label>New Status</label>
+
+            <select class="admin-order-status-select">
+
+              <option value="ORDER_PLACED">
+                Order Placed
+              </option>
+
+              <option value="PROCESSING">
+                Processing
+              </option>
+
+              <option value="SHIPPED">
+                Shipped
+              </option>
+
+              <option value="IN_TRANSIT">
+                In Transit
+              </option>
+
+              <option value="OUT_FOR_DELIVERY">
+                Out for Delivery
+              </option>
+
+              <option value="DELIVERED">
+                Delivered
+              </option>
+
+              <option value="CANCELLED">
+                Cancelled
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <button
+            type="button"
+            class="primary-button admin-update-order-button"
+          >
+            Save Status
+          </button>
+
+        </div>
+
+
+        <p
+          class="admin-order-update-message"
+          role="status"
+          aria-live="polite"
+        ></p>
+
+      </div>
+
+    </article>
+
+  </template>
+
+</section>
+
+<!-- END ADMIN ORDER MANAGEMENT -->
         </div>
 
       </div>
@@ -1313,7 +1674,7 @@
       </small>
 
     </div>
-<div "#terms.html">
+
   </footer>
 
 <!-- Firebase SDK -->

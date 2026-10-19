@@ -4257,6 +4257,119 @@ document.addEventListener("click", async function (event) {
   }
 
 });
+
+/* =====================================================
+   ADMIN: CANCEL ORDER
+===================================================== */
+
+document.addEventListener("click", async event => {
+
+  const button = event.target.closest(
+    "[data-cancel-admin-order]"
+  );
+
+  if (!button) {
+    return;
+  }
+
+  if (!adminLoggedIn || !adminToken) {
+    showToast("Please login as admin first.", "error");
+    return;
+  }
+
+  const orderId = button.dataset.cancelAdminOrder;
+
+  const order = (
+    window.meshkartAdminOrders || []
+  ).find(item =>
+    String(item.id) === String(orderId)
+  );
+
+  if (!order) {
+    showToast("Order not found. Please refresh orders.", "error");
+    return;
+  }
+
+  const currentStatus = String(
+    order.order_status || ""
+  )
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, "_");
+
+  if (currentStatus === "CANCELLED") {
+    showToast("This order is already cancelled.", "error");
+    return;
+  }
+
+  if (currentStatus === "DELIVERED") {
+    showToast("A delivered order cannot be cancelled here.", "error");
+    return;
+  }
+
+  const orderNumber = order.order_number || order.id;
+
+  const confirmed = window.confirm(
+    `Are you sure you want to cancel Order #${orderNumber}?\n\n` +
+    "This will change the order status to CANCELLED."
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Cancelling...";
+
+  try {
+
+    const response = await fetch(
+      `${CONFIG.API_BASE_URL}/api/admin/orders/${encodeURIComponent(orderId)}/status`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${adminToken}`,
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          status: "CANCELLED"
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(
+        data.message || "Unable to cancel this order."
+      );
+    }
+
+    showToast(
+      `Order #${orderNumber} cancelled successfully.`,
+      "success"
+    );
+
+    await loadAdminOrders();
+
+  } catch (error) {
+
+    console.error("Admin order cancellation error:", error);
+
+    showToast(
+      error.message || "Unable to cancel this order.",
+      "error"
+    );
+
+  } finally {
+
+    button.disabled = false;
+    button.textContent = "Cancel Order";
+
+  }
+
+});
 /* =====================================================
    ADMIN EDIT PRODUCT
 ===================================================== */
